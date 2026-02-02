@@ -51,15 +51,16 @@ def get_trading_212_portfolio():
     api_creds = st.session_state.get('trading_212_api_key')
     
     # Handle both old format (string) and new format (dict)
-    if not api_creds or not isinstance(api_creds, dict) or not api_creds.get('key_id') or not api_creds.get('secret'):
-        return None, "⚠️ Trading 212 API credentials not configured. Please add them in Settings."
+    if not api_creds or not isinstance(api_creds, dict) or not api_creds.get('key_id'):
+        return None, "⚠️ Trading 212 API key not configured. Please add it in Settings."
     
     # Get environment (demo or live)
     env = st.session_state.get('trading_212_env', 'live')
     base_url = f"https://{env}.trading212.com/api/v0"
     
-    # Combine key_id and secret for authorization
-    api_key = f"{api_creds['key_id']}:{api_creds['secret']}".strip()
+    # Trading 212 uses the API key directly (stored in 'key_id' field)
+    # The 'secret' field can be left empty or used for future multi-part auth
+    api_key = api_creds.get('key_id', '').strip()
     
     headers = {
         "Authorization": api_key
@@ -77,7 +78,7 @@ def get_trading_212_portfolio():
             cash = cash_response.json() if cash_response.status_code == 200 else {}
             return {"positions": positions, "cash": cash}, None
         elif positions_response.status_code == 401:
-            return None, f"❌ Authentication failed (401). Please check your API Key ID and Secret."
+            return None, f"❌ Authentication failed (401). Please check your API Key."
         else:
             return None, f"Error: {positions_response.status_code} - {positions_response.text}"
     except requests.exceptions.RequestException as e:
@@ -91,15 +92,15 @@ def get_trading_212_orders():
     api_creds = st.session_state.get('trading_212_api_key')
     
     # Handle both old format (string) and new format (dict)
-    if not api_creds or not isinstance(api_creds, dict) or not api_creds.get('key_id') or not api_creds.get('secret'):
-        return None, "⚠️ Trading 212 API credentials not configured. Please add them in Settings."
+    if not api_creds or not isinstance(api_creds, dict) or not api_creds.get('key_id'):
+        return None, "⚠️ Trading 212 API key not configured. Please add it in Settings."
     
     # Get environment (demo or live)
     env = st.session_state.get('trading_212_env', 'live')
     base_url = f"https://{env}.trading212.com/api/v0"
     
-    # Combine key_id and secret for authorization
-    api_key = f"{api_creds['key_id']}:{api_creds['secret']}".strip()
+    # Trading 212 uses the API key directly (stored in 'key_id' field)
+    api_key = api_creds.get('key_id', '').strip()
     
     headers = {
         "Authorization": api_key
@@ -111,7 +112,7 @@ def get_trading_212_orders():
         if response.status_code == 200:
             return response.json(), None
         elif response.status_code == 401:
-            return None, f"❌ Authentication failed (401). Please check your API Key ID and Secret."
+            return None, f"❌ Authentication failed (401). Please check your API Key."
         else:
             return None, f"Error: {response.status_code} - {response.text}"
     except requests.exceptions.RequestException as e:

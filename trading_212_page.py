@@ -15,7 +15,7 @@ def show_trading_212_page():
         current_creds = st.session_state.get('trading_212_api_key')
         # Handle both old format (string) and new format (dict)
         if isinstance(current_creds, dict):
-            key_status = "✅ Configured" if current_creds.get('key_id') and current_creds.get('secret') else "❌ Not configured"
+            key_status = "✅ Configured" if current_creds.get('key_id') else "❌ Not configured"
         else:
             key_status = "❌ Not configured"
         st.write(f"Status: {key_status}")
@@ -30,26 +30,21 @@ def show_trading_212_page():
         st.session_state.trading_212_env = env
         
         with st.form("api_key_form"):
-            key_id = st.text_input(
-                "Trading 212 API Key ID", 
+            api_key = st.text_input(
+                "Trading 212 API Key", 
                 type="password",
-                placeholder="Enter your Trading 212 API Key ID",
-                help="Get your credentials from Trading 212 Settings → API (Beta)"
+                placeholder="Enter your Trading 212 API Key",
+                help="Get your API key from Trading 212 Settings → API (Beta)"
             )
-            secret = st.text_input(
-                "Trading 212 API Secret", 
-                type="password",
-                placeholder="Enter your Trading 212 API Secret",
-                help="This is the secret part of your API credentials"
-            )
-            save_button = st.form_submit_button("💾 Save Credentials")
+            save_button = st.form_submit_button("💾 Save API Key")
             
-            if save_button and key_id and secret:
+            if save_button and api_key:
                 user_id = st.session_state.user.id
-                success, message = save_user_api_key(user_id, key_id, secret)
+                # Store in key_id field, secret can be empty
+                success, message = save_user_api_key(user_id, api_key, '')
                 
                 if success:
-                    st.session_state.trading_212_api_key = {'key_id': key_id, 'secret': secret}
+                    st.session_state.trading_212_api_key = {'key_id': api_key, 'secret': ''}
                     st.success(message)
                     st.rerun()
                 else:
@@ -57,13 +52,16 @@ def show_trading_212_page():
         
         st.divider()
         st.info("""
-        **How to get your Trading 212 API credentials:**
+        **How to get your Trading 212 API Key:**
         1. Log in to Trading 212
         2. Go to Settings → API (Beta)
-        3. Generate a new API key (you'll get both Key ID and Secret)
-        4. Paste both above and save
+        3. Generate a new API key
+        4. Copy the entire key and paste it above
         
-        **Security:** Your credentials are encrypted and stored in Supabase with Row Level Security (RLS).
+        **Environment:** Choose 'demo' for testing with paper trading, or 'live' for real trading.
+        
+        **Security:** Your API key is encrypted and stored in Supabase with Row Level Security (RLS).
+        """)
         """)
     
     # Add refresh button
@@ -72,8 +70,8 @@ def show_trading_212_page():
     
     # Check if API credentials are configured
     api_creds = st.session_state.get('trading_212_api_key')
-    if not api_creds or not isinstance(api_creds, dict) or not api_creds.get('key_id') or not api_creds.get('secret'):
-        st.warning("⚠️ Please configure your Trading 212 API credentials in Settings above to view your portfolio.")
+    if not api_creds or not isinstance(api_creds, dict) or not api_creds.get('key_id'):
+        st.warning("⚠️ Please configure your Trading 212 API key in Settings above to view your portfolio.")
         return
     
     with st.spinner("Fetching portfolio data..."):
