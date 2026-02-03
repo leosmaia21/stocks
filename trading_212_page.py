@@ -62,7 +62,6 @@ def show_trading_212_page():
         
         **Security:** Your API key is encrypted and stored in Supabase with Row Level Security (RLS).
         """)
-        """)
     
     # Add refresh button
     if st.button("🔄 Refresh Data"):
